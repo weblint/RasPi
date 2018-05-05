@@ -2,11 +2,14 @@
 use LWP::UserAgent;
 use POSIX qw/strftime/;
 use Time::Local;
+use Geo::METAR;
+#use strict;
 
 my $Datum=strftime "%d.%m.%Y", localtime;
 my $dir = '/home/pi/';
 #my $metar_url = 'http://weather.noaa.gov/pub/data/observations/metar/stations/EDLP.TXT';
-my $metar_url = 'http://de.allmetsat.com/metar-taf/deutschland.php?icao=EDLP';
+my $metar_url = 'http://tgftp.nws.noaa.gov/data/observations/metar/stations/EDLP.TXT';
+#my $metar_url = 'http://de.allmetsat.com/metar-taf/deutschland.php?icao=EDLP';
 my $is_celsius = 1; #set to 1 if using Celsius
 
 my $ua = new LWP::UserAgent;
@@ -15,8 +18,8 @@ my $request = new HTTP::Request('GET', $metar_url);
 my $response = $ua->request($request);
 my $metar= $response->content();
 
-$metar =~ /([\s|Mt])(\d{2})\//g;
-$outtemp = ($1 eq 'Mt') ? $2 * -1 : $2; #'M' in a METAR report signifies below 0 temps
+$metar =~ /([\s|M])(\d{2})\//g;
+$outtemp = ($1 eq 'M') ? $2 * -1 : $2; #'M' in a METAR report signifies below 0 temps
 $outtemp = ($is_celsius) ? $outtemp + 0 : ($outtemp * 9/5) + 32;
 
 $modules = `cat /proc/modules`;
@@ -29,7 +32,6 @@ else
         $gpio = `sudo modprobe w1-gpio`;
         $therm = `sudo modprobe w1-therm`;
 }
-
 $output = "";
 $attempts = 0;
 while ($output !~ /YES/g && $attempts < 5)
